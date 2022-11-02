@@ -7,6 +7,8 @@
  * ---------------------------------------------------------------------- 
  */
 
+ #define akc 1
+
 constexpr const uint32_t serial_monitor_bauds=115200;
 constexpr const uint32_t serial1_bauds=9600;
 
@@ -35,9 +37,14 @@ void loop()
 {
   //Serial.println("******************** echo example *********************"); 
 
-  if(Serial.available()>0) {  
-    SerialUSB.print("Se ha leido: ");
-    SerialUSB.print(Serial.read().data());
+  if(Serial.available()>0) { // Si se encuentra algo que leer 
+    String input = Serial.readStringUntil('\n'); //Leemos hasta que se encuentra un sato de línea
+    if (input == "help") {  // Si se lee help mostramos el menú de ayuda
+      help();
+    } else {  // Si no mostramos que se ha leido
+      SerialUSB.print("Se ha leido: ");
+      SerialUSB.println(input);
+    }
   }
 
 
@@ -45,9 +52,11 @@ void loop()
   while(millis()-last_ms<pseudo_period_ms) 
   { 
     if(Serial1.available()>0) {  
-      uint8_t data=Serial1.read();
-      //SerialUSB.println("La medida obtenida es: " + data + "cms");
-      Serial1.write(1); //definirlo arriba
+      uint8_t data = Serial1.read();
+      SerialUSB.print("La medida obtenida es: ");
+      SerialUSB.print(data);
+      SerialUSB.println("cms");
+      Serial1.write(akc);
       break;
     }
   }
