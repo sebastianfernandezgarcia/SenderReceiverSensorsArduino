@@ -6,8 +6,10 @@
  *  Asignatura (GII-IC)
  * ---------------------------------------------------------------------- 
  */
+ 
+#include <Regexp.h>
 
- #define akc 6
+#define akc 6
 
 constexpr const uint32_t serial_monitor_bauds=115200;
 constexpr const uint32_t serial1_bauds=9600;
@@ -40,40 +42,94 @@ void loop()
   if(Serial.available()>0) { // Si se encuentra algo que leer 
     String input = Serial.readStringUntil('\n'); //Leemos hasta que se encuentra un sato de línea
 
+    char Buf[50];
+    input.toCharArray(Buf, 50);
+
+    MatchState ms;
+    ms.Target(Buf);
+
+    char result1 = ms.Match("^us [a-z0-9]+ [(oneshot)+|(on)? 0-9|off]+$"); //este no he podido hacerlo con one-shot por lo que lo he puesto como oneshot
+    char result2 = ms.Match("^us [a-z0-9]+ unit [(inc|cm|ms)]+$"); 
+    char result3 = ms.Match("^us [a-z0-9]+ delay [0-9]+$"); 
+    char result4 = ms.Match("^us [a-z0-9]+ status$"); 
+
     // En todas las ordenes pasamos a los metodos parametros de tipo char []
     // Ya que el metodo Serial1.write() no permite mandar tipo String
     
     if (input == "help") {  // Si se lee help mostramos el menú de ayuda
       help();
-    } else if (input == "") { // Orden de un disparo
-      String sensor = "srf02";
-      char sens [5];
-      String option = "on";
-      char opt [8];
-      String miliseconds = "500";
+    } else if (result1 == REGEXP_MATCHED) { // Orden de un disparo
+      SerialUSB.println("Es el primerito");
+
+      int posicionPrimerEspacio = input.indexOf(" ");
+      String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
+      int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
+      String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);   
+
+      String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
+
       char tmp [5];
+
+      if (stringDesdeSegundoEspacio.compareTo("on")){
+        int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
+        String tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
+        
+        String miliseconds = tiempo;
+        miliseconds.toCharArray(tmp, 5);
+      }
+      
+      String sensor = nombreSensor;
+      char sens [5];
+      String option = stringDesdeSegundoEspacio;
+      char opt [8];
+      
+      
       sensor.toCharArray(sens, 5);
       option.toCharArray(opt, 8);
-      miliseconds.toCharArray(tmp, 5);
+      
       oneshot(sens, opt, tmp);
-    } else if (input == "") { // Orden para cambiar unidades
-      String sensor = "srf02";
+    } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
+      
+      int posicionPrimerEspacio = input.indexOf(" ");
+      String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
+      int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
+      String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
+
+      String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
+      int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
+      String unidadMedida = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio);
+      
+      String sensor = nombreSensor;
       char sens [5];
-      String unidad = "cm";
+      String unidad = unidadMedida;
       char unit [3];
       sensor.toCharArray(sens, 5);
       unidad.toCharArray(unit, 3);
       changeUnit(sens, unit);
-    } else if (input == "") { // Orden para cambiar retardo entre disparos
-      String sensor = "srf02";
+    } else if (result3 == REGEXP_MATCHED) { // Orden para cambiar retardo entre disparos
+      
+      int posicionPrimerEspacio = input.indexOf(" ");
+      String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
+      int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
+      String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
+
+      String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
+      int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
+      String tiempo = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio+1);
+      
+      String sensor = nombreSensor;
       char sens [5];
-      String miliseconds = "500";
+      String miliseconds = tiempo;
       char tmp [5];
       sensor.toCharArray(sens, 5);
       miliseconds.toCharArray(tmp, 5);
       delayed(sens, tmp);
-    } else if (input == "") { // Orden para obtener configuración del sensor
-      String sensor = "srf02";
+    } else if (result4 == REGEXP_MATCHED) { // Orden para obtener configuración del sensor
+      int posicionPrimerEspacio = input.indexOf(" ");
+      String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
+      int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
+      String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
+      String sensor = nombreSensor;
       char sens [5];
       sensor.toCharArray(sens, 5);
       state(sens);
