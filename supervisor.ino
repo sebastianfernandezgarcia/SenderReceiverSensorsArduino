@@ -231,6 +231,8 @@ int state(char sensor [5]) {
 
 // Orden para informar de todos los sensores disponibles
 int us() {
+  option = 5;
+  Serial1.write(option);
   SerialUSB.println("Los sensores disponibles son: ");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
