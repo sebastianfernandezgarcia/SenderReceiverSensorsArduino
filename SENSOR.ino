@@ -122,31 +122,31 @@ void setup()
 void loop()
 {
 
-  /*//------
-  //Serial.print("ranging 1...");
+  //------
+  Serial.print("ranging 1...");
   write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
-  //delay(SRF02_RANGING_DELAY);
+  delay(SRF02_RANGING_DELAY);
   
   byte high_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_HIGH_BYTE);
   byte low_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_LOW_BYTE);
   byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  //Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
-  //Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
+  Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
+  Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
   
 
-  //Serial.print("ranging 2...");
+  Serial.print("ranging 2...");
   write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
-  //delay(SRF04_RANGING_DELAY);
+  delay(SRF04_RANGING_DELAY);
   
   byte high_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_HIGH_BYTE);
   byte low_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_LOW_BYTE);
   byte high_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  //Serial.print(int((high_byte_range_2<<8) | low_byte_range_2)); Serial.print(" cms. (min=");
-  //Serial.print(int((high_min_2<<8) | low_min_2)); Serial.println(" cms.)");
+  Serial.print(int((high_byte_range_2<<8) | low_byte_range_2)); Serial.print(" cms. (min=");
+  Serial.print(int((high_min_2<<8) | low_min_2)); Serial.println(" cms.)");
 
   //-------
   //Serial.println("******************* sending example *******************"); 
@@ -155,7 +155,8 @@ void loop()
   //Serial1.write(int((high_byte_range<<8) | low_byte_range));
 
   //Serial.print("Enviando 2--> : "); Serial.println(int((high_byte_range_2<<8) | low_byte_range_2));
-  //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));*/
+  //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
+  
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) 
@@ -194,11 +195,6 @@ void loop()
       break;
     }
   }
-
-  /*if(millis()-last_ms<pseudo_period_ms) delay(pseudo_period_ms-(millis()-last_ms));
-  else Serial.println("<-- received: TIMEOUT!!");*/
-
-  //Serial.println("*******************************************************"); 
 
   digitalWrite(LED_BUILTIN,led_state); led_state=(led_state+1)&0x01;
 }
