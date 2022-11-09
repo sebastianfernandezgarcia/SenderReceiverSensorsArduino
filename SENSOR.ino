@@ -14,6 +14,10 @@
 #define SRF02_I2C_INIT_DELAY 100 // in milliseconds
 #define SRF02_RANGING_DELAY 70 // milliseconds
 
+#define SRF04_I2C_ADDRESS byte((0xF0)>>1)
+#define SRF04_I2C_INIT_DELAY 200 // in milliseconds
+#define SRF04_RANGING_DELAY 140 // milliseconds
+
 // LCD05's command related definitions
 #define COMMAND_REGISTER byte(0x00)
 #define SOFTWARE_REVISION byte(0x00)
@@ -92,7 +96,7 @@ void setup()
 
 
   //------------------SET UP DEL SENSOR----------------------
-    Serial.begin(9600);
+  Serial.begin(9600);
   
   Serial.println("initializing Wire interface ...");
   Wire.begin();
@@ -104,13 +108,22 @@ void setup()
   Serial.print(software_revision,HEX); Serial.println(")");
 
   //----------------FIN DE SET UP DEL SENSOR---------------
+
+  //------------------SET UP DEL SENSOR 2---------------------
+  delay(SRF04_I2C_INIT_DELAY);  
+   
+  byte software_revision_2=read_register(SRF04_I2C_ADDRESS,SOFTWARE_REVISION);
+  Serial.print("SFR04 ultrasonic range finder in address 0x");
+  Serial.print(SRF04_I2C_ADDRESS,HEX); Serial.print("(0x");
+  Serial.print(software_revision_2,HEX); Serial.println(")");
+  //----------------FIN DE SET UP DEL SENSOR---------------
 }
 
 void loop()
 {
 
   //------
-   // Serial.print("ranging ...");
+  Serial.print("ranging ...");
   write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
   delay(SRF02_RANGING_DELAY);
   
@@ -119,18 +132,33 @@ void loop()
   byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  //Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
-  //Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
+  Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
+  Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
   
   delay(1000);
 
-
+  Serial.print("ranging 2...");
+  write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
+  delay(SRF04_RANGING_DELAY);
+  
+  byte high_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_HIGH_BYTE);
+  byte low_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_LOW_BYTE);
+  byte high_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
+  byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
+  
+  Serial.print(int((high_byte_range_2<<8) | low_byte_range_2)); Serial.print(" cms. (min=");
+  Serial.print(int((high_min_2<<8) | low_min_2)); Serial.println(" cms.)");
 
   //-------
-  //Serial.println("******************* sending example *******************"); 
+  Serial.println("******************* sending example *******************"); 
 
-  Serial.print("Enviando --> : "); Serial.print(int((high_byte_range<<8) | low_byte_range));
+  Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
   Serial1.write(int((high_byte_range<<8) | low_byte_range));
+
+  delay(1000);
+
+  Serial.print("Enviando 2--> : "); Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
+  Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
 
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) 
