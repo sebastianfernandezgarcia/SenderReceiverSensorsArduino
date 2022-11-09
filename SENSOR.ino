@@ -122,65 +122,83 @@ void setup()
 void loop()
 {
 
-  //------
-  Serial.print("ranging ...");
+  /*//------
+  //Serial.print("ranging 1...");
   write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
-  delay(SRF02_RANGING_DELAY);
+  //delay(SRF02_RANGING_DELAY);
   
   byte high_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_HIGH_BYTE);
   byte low_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_LOW_BYTE);
   byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
-  Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
+  //Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
+  //Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
   
-  delay(1000);
 
-  Serial.print("ranging 2...");
+  //Serial.print("ranging 2...");
   write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
-  delay(SRF04_RANGING_DELAY);
+  //delay(SRF04_RANGING_DELAY);
   
   byte high_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_HIGH_BYTE);
   byte low_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_LOW_BYTE);
   byte high_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  Serial.print(int((high_byte_range_2<<8) | low_byte_range_2)); Serial.print(" cms. (min=");
-  Serial.print(int((high_min_2<<8) | low_min_2)); Serial.println(" cms.)");
+  //Serial.print(int((high_byte_range_2<<8) | low_byte_range_2)); Serial.print(" cms. (min=");
+  //Serial.print(int((high_min_2<<8) | low_min_2)); Serial.println(" cms.)");
 
   //-------
-  Serial.println("******************* sending example *******************"); 
+  //Serial.println("******************* sending example *******************"); 
 
-  Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
-  Serial1.write(int((high_byte_range<<8) | low_byte_range));
+  //Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
+  //Serial1.write(int((high_byte_range<<8) | low_byte_range));
 
-  delay(1000);
-
-  Serial.print("Enviando 2--> : "); Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
-  Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
-
+  //Serial.print("Enviando 2--> : "); Serial.println(int((high_byte_range_2<<8) | low_byte_range_2));
+  //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));*/
   uint32_t last_ms=millis();
-  while(millis()-last_ms<pseudo_period_ms) 
-  { 
+  while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) 
     {
-      uint8_t data=Serial1.read();
-      
-      if(data==1){
-        Serial.println(". Se envió el dato y recibió la confirmación correctamente");
-      }
-      else Serial.println(". Se envió el dato pero no hay confirmación de respuesta"); 
-
-      //Serial.print("<-- received: "); Serial.println(static_cast<int>(data)); 
+      int data_len = 50;
+      byte data [data_len];
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.println("Leyendo...");
+      if((int)data[0]==1){
+        Serial.print("Ejecutando orden oneshot");
+        if ((int)data[1]==2) {
+          Serial.print(" con el sensor srf04");
+        } else {
+          Serial.print(" con el sensor srf02");
+        }
+        if ((int)data[2]==2) {
+          Serial.print(" opcion on");
+          SerialUSB.print(" con un delay de ");
+          SerialUSB.println((int)data[3]);
+        } else if ((int)data[2]==3) {
+          Serial.println(" opcion off");
+        } else {
+          Serial.println(" opcion oneshot");
+        }
+        char res []= {'o', 'k'};
+        Serial1.write(res, 2);
+      } else if (data[0]==2) {
+        
+      } else if(data[0]==3) {
+        
+      } else if(data[0]==4) {
+        
+      } else if (data[0]==5) {
+        
+      } 
       break;
     }
   }
 
-  if(millis()-last_ms<pseudo_period_ms) delay(pseudo_period_ms-(millis()-last_ms));
-  else Serial.println("<-- received: TIMEOUT!!"); 
+  /*if(millis()-last_ms<pseudo_period_ms) delay(pseudo_period_ms-(millis()-last_ms));
+  else Serial.println("<-- received: TIMEOUT!!");*/
 
-  Serial.println("*******************************************************"); 
+  //Serial.println("*******************************************************"); 
 
   digitalWrite(LED_BUILTIN,led_state); led_state=(led_state+1)&0x01;
 }

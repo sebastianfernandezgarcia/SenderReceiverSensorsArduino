@@ -63,32 +63,34 @@ void loop()
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
       String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);   
-      SerialUSB.print("Nombre del sensor: ");
-      SerialUSB.println(nombreSensor);
       String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
       int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
       String nombreOpcion = stringDesdeSegundoEspacio.substring(0, posicionTercerEspacio);
-      SerialUSB.print("Opcion: ");
-      SerialUSB.println(nombreOpcion);
-      char tmp [5];
-
+      String tiempo = "";
       if (nombreOpcion.equals("on")){
-        String tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
-        SerialUSB.print("Tiempo: ");
-        SerialUSB.println(tiempo);
-        String miliseconds = tiempo;
-        miliseconds.toCharArray(tmp, 5);
+        tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
+      }
+
+      byte v[4];
+      v[0] = (byte)1;
+      if (nombreSensor.equals("srf04")) {
+        v[1] = (byte)2;
+      } else {
+        v[1] = (byte)1;
+      }
+
+      if (nombreOpcion.equals("off")) {
+        v[2] = (byte)3;
+        v[3] = (byte)0;
+      } else if (nombreOpcion.equals("on")) {
+        v[2] = (byte)2;
+        v[3] = (byte)tiempo.toInt();
+      } else {
+        v[2] = (byte)1;
+        v[3] = (byte)0;
       }
       
-      String sensor = nombreSensor;
-      char sens [5];
-      String option = stringDesdeSegundoEspacio;
-      char opt [8];
-      
-      sensor.toCharArray(sens, 5);
-      option.toCharArray(opt, 8);
-      
-      oneshot(sens, opt, tmp);
+      oneshot(v);
     } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
       
       int posicionPrimerEspacio = input.indexOf(" ");
@@ -171,13 +173,29 @@ void help(){
 }
 
 // Orden de hacer oneshot, disparar continuado con 'tiempo' periodico o apagar el sensor
-int oneshot(char sensor [5], char accion [8], char tiempo [5]) {
-  option = 1;
-  Serial1.write(option);
-  Serial1.write(sensor);
-  Serial1.write(accion);
-  if (tiempo != "" || tiempo != 0) {
-    Serial1.write(tiempo);
+int oneshot(byte v [4]) {
+  Serial1.write(v, sizeof(v));
+  SerialUSB.print("Se ha pasado: ");
+  SerialUSB.print((int)v[0]);
+  SerialUSB.print(" ");
+  SerialUSB.print((int)v[1]);
+  SerialUSB.print(" ");
+  SerialUSB.print((int)v[2]);
+  SerialUSB.print(" ");
+  SerialUSB.println((int)v[3]);
+  uint32_t last_ms=millis();
+  while(millis()-last_ms<pseudo_period_ms) { 
+    if(Serial1.available()>0) {  
+      int data_len = 2;
+      char data[data_len];
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.print("Estado de la orden: ");
+      for (int i = 0; i < rlen; i++) {
+        SerialUSB.print(data[i]);
+      }
+      SerialUSB.println();
+      break;
+    }
   }
 }
 
