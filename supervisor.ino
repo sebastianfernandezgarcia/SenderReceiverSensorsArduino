@@ -59,21 +59,23 @@ void loop()
     if (input == "help") {  // Si se lee help mostramos el menú de ayuda
       help();
     } else if (result1 == REGEXP_MATCHED) { // Orden de un disparo
-      SerialUSB.println("Es el primerito");
-
       int posicionPrimerEspacio = input.indexOf(" ");
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
       String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);   
-
+      SerialUSB.print("Nombre del sensor: ");
+      SerialUSB.println(nombreSensor);
       String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
-
+      int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
+      String nombreOpcion = stringDesdeSegundoEspacio.substring(0, posicionTercerEspacio);
+      SerialUSB.print("Opcion: ");
+      SerialUSB.println(nombreOpcion);
       char tmp [5];
 
-      if (stringDesdeSegundoEspacio.compareTo("on")){
-        int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
+      if (nombreOpcion.equals("on")){
         String tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
-        
+        SerialUSB.print("Tiempo: ");
+        SerialUSB.println(tiempo);
         String miliseconds = tiempo;
         miliseconds.toCharArray(tmp, 5);
       }
@@ -82,7 +84,6 @@ void loop()
       char sens [5];
       String option = stringDesdeSegundoEspacio;
       char opt [8];
-      
       
       sensor.toCharArray(sens, 5);
       option.toCharArray(opt, 8);
@@ -143,7 +144,7 @@ void loop()
   }
 
 
-  uint32_t last_ms=millis();
+  /*uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) 
   { 
     if(Serial1.available()>0) {  
@@ -154,7 +155,7 @@ void loop()
       Serial1.write(akc);     // Constante definida con valor 6 para controlar que la comunicación con el sensor es correcta
       break;
     }
-  }
+  }*/
   digitalWrite(LED_BUILTIN,led_state);
   led_state=(led_state+1)&0x01;
 }
