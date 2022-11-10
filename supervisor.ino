@@ -258,14 +258,13 @@ int state(byte v [2]) {
 // Orden para informar de todos los sensores disponibles
 int us(byte v[1]) {
   Serial1.write(v, sizeof(v));
-  SerialUSB.println("Los sensores disponibles son: ");
+  SerialUSB.print("Los sensores disponibles son: ");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      int data_len = 2;
+      int data_len = 12;
       char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
-      SerialUSB.print("Estado de la orden: ");
       for (int i = 0; i < rlen; i++) {
         SerialUSB.print(data[i]);
       }

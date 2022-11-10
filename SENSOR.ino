@@ -159,12 +159,10 @@ void loop()
   
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
-    if(Serial1.available()>0) 
-    {
+    if(Serial1.available()>0) {
       int data_len = 50;
       byte data [data_len];
       int rlen = Serial1.readBytes(data, data_len);
-      SerialUSB.println("Leyendo...");
       if((int)data[0]==1){      // Orden de un disparo
         Serial.print("Ejecutando orden oneshot");
         if ((int)data[1]==2) {
@@ -213,16 +211,16 @@ void loop()
       } else if(data[0]==4) {     // Orden para obtener configuración del sensor
         Serial.print("Ejecutando orden status");
         if ((int)data[1]==2) {
-          Serial.print(" con el sensor srf04");
+          Serial.println(" con el sensor srf04");
         } else {
-          Serial.print(" con el sensor srf02");
+          Serial.println(" con el sensor srf02");
         }
         char res []= {'o', 'k'};
         Serial1.write(res, 2);
       } else if (data[0]==5) {    // Orden para mostrar lista de sensores
-        Serial.print("Ejecutando orden us");
-        char res []= {'o', 'k'};
-        Serial1.write(res, 2);
+        Serial.println("Ejecutando orden us");
+        char res []= {'s', 'r', 'f', '0', '2', ',', ' ', 's', 'r', 'f', '0', '4'};
+        Serial1.write(res, 12);
       } 
       break;
     }
