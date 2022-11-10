@@ -165,7 +165,7 @@ void loop()
       byte data [data_len];
       int rlen = Serial1.readBytes(data, data_len);
       SerialUSB.println("Leyendo...");
-      if((int)data[0]==1){
+      if((int)data[0]==1){      // Orden de un disparo
         Serial.print("Ejecutando orden oneshot");
         if ((int)data[1]==2) {
           Serial.print(" con el sensor srf04");
@@ -183,14 +183,46 @@ void loop()
         }
         char res []= {'o', 'k'};
         Serial1.write(res, 2);
-      } else if (data[0]==2) {
-        
-      } else if(data[0]==3) {
-        
-      } else if(data[0]==4) {
-        
-      } else if (data[0]==5) {
-        
+      } else if (data[0]==2) {    // Orden para cambiar unidades
+        Serial.print("Ejecutando orden chaneUnits");
+        if ((int)data[1]==2) {
+          Serial.print(" con el sensor srf04");
+        } else {
+          Serial.print(" con el sensor srf02");
+        }
+        if ((int)data[2]==2) {
+          Serial.println(" cambiando a inc");
+        } else if ((int)data[2]==3) {
+          Serial.println(" cambiando a ms");
+        } else {
+          Serial.println(" cambiando a cm");
+        }
+        char res []= {'o', 'k'};
+        Serial1.write(res, 2);
+      } else if(data[0]==3) {     // Orden para cambiar retardo entre disparos
+        Serial.print("Ejecutando orden delay");
+        if ((int)data[1]==2) {
+          Serial.print(" con el sensor srf04");
+        } else {
+          Serial.print(" con el sensor srf02");
+        }
+        Serial.print(" con un valor de ");
+        SerialUSB.println((int)data[3]);
+        char res []= {'o', 'k'};
+        Serial1.write(res, 2);
+      } else if(data[0]==4) {     // Orden para obtener configuración del sensor
+        Serial.print("Ejecutando orden status");
+        if ((int)data[1]==2) {
+          Serial.print(" con el sensor srf04");
+        } else {
+          Serial.print(" con el sensor srf02");
+        }
+        char res []= {'o', 'k'};
+        Serial1.write(res, 2);
+      } else if (data[0]==5) {    // Orden para mostrar lista de sensores
+        Serial.print("Ejecutando orden us");
+        char res []= {'o', 'k'};
+        Serial1.write(res, 2);
       } 
       break;
     }
