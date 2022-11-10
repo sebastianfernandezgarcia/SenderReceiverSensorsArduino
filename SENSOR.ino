@@ -1,16 +1,13 @@
-/* ----------------------------------------------------------------------
- *  Ejemplo sending_example.ino 
- *    Este ejemplo muestra como utilizar el puerto serie uart (Serial1) 
- *    para comunicarse con otro dispositivo.
- *    
- *  Asignatura (GII-IC)
- * ---------------------------------------------------------------------- 
+/*
+ * Implementacion de interfaz para control de sensores
  */
 
+// Banderas de control para la configuración de las unidades de medición de los sensores
 volatile boolean inc_flag_2=false;
 volatile boolean ms_flag_2=false;
 volatile boolean inc_flag_4=false;
 volatile boolean ms_flag_4=false;
+// Banderas de control para la configuración del estado de los sensores
 volatile boolean off_2=false;
 volatile boolean off_4=false;
 volatile boolean one_shot_2=false;
@@ -60,16 +57,14 @@ uint8_t led_state=LOW;
 
 
 //---------------------- FUNCIONES SENSOR------------------------
-inline void write_command(byte address,byte command)
-{ 
+inline void write_command(byte address,byte command){ 
   Wire.beginTransmission(address);
   Wire.write(COMMAND_REGISTER); 
   Wire.write(command); 
   Wire.endTransmission();
 }
 
-byte read_register(byte address,byte the_register)
-{
+byte read_register(byte address,byte the_register){
   Wire.beginTransmission(address);
   Wire.write(the_register);
   Wire.endTransmission();
@@ -83,8 +78,7 @@ byte read_register(byte address,byte the_register)
  //-----------------------------FIN FUNCIONES SENSOR=--------------------------------
 
  
-void setup()
-{
+void setup(){
 
   //------------SET UP SENDERRECEIVER------------------------------
   // Configuración del LED incluido en placa
@@ -130,18 +124,19 @@ void setup()
 
 void loop() {
 
-  if (off_2 && off_4) {
+  if (off_2 && off_4) { // Si las banderas de estado apagado de ambos sensores estan a true informamos de ello
     Serial.println("Los dos sensores se encuentran apagados, esperando a que se encienda alguno...");
+    
   }
   
   //------
-  if (!off_2) {
+  if (!off_2) {  // Si el sensor srf02 no esta en estado apagado
     Serial.print("ranging 1...");
-    if (inc_flag_2 && !ms_flag_2) {
+    if (inc_flag_2 && !ms_flag_2) {   // En este caso configuramos el sensor srf02 para que mida en inc
       write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
-    } else if (!inc_flag_2 && ms_flag_2) {
+    } else if (!inc_flag_2 && ms_flag_2) {    // En este caso configuramos el sensor srf02 para que mida en ms
       write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
-    } else {
+    } else {    // Por defecto configuramos el sensor srf02 para que mida en cm
       write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
     }
     delay(SRF02_RANGING_DELAY);
@@ -152,36 +147,36 @@ void loop() {
     byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
     
     Serial.print(int((high_byte_range<<8) | low_byte_range)); 
-    if (inc_flag_2 && !ms_flag_2) {
+    if (inc_flag_2 && !ms_flag_2) {   // En este caso significa que el sensor srf02 está midiendo en inc
       Serial.print(" inc. (min=");
-    } else if (!inc_flag_2 && ms_flag_2) {
+    } else if (!inc_flag_2 && ms_flag_2) {  // En este caso significa que el sensor srf02 está midiendo en ms
       Serial.print(" ms. (min=");
-    } else {
+    } else {    // Por defecto el sensor srf02 está midiendo en cm
       Serial.print(" cms. (min="); 
     }
     Serial.print(int((high_min<<8) | low_min));
-    if (inc_flag_2 && !ms_flag_2) {
+    if (inc_flag_2 && !ms_flag_2) {   // En este caso significa que el sensor srf02 está midiendo en inc
       Serial.println(" inc.)");
-    } else if (!inc_flag_2 && ms_flag_2) {
+    } else if (!inc_flag_2 && ms_flag_2) {  // En este caso significa que el sensor srf02 está midiendo en ms
       Serial.println(" ms.)");
-    } else {
+    } else {    // Por defecto el sensor srf02 está midiendo en cm
       Serial.println(" cms.)"); 
     }
     //Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
     //Serial1.write(int((high_byte_range<<8) | low_byte_range));
-    if (one_shot_2) {
-      one_shot_2 = false;
-      off_2 = true;
+    if (one_shot_2) { // Si el sensor srf02 se le solicita un solo disparo
+      one_shot_2 = false; // Devolvemos la bandera de un disparo a false
+      off_2 = true; // Volvemos a apagar el sensor 
     }
   }
 
-  if (!off_4) {
+  if (!off_4) { // Si el sensor srf04 no esta en estado apagado
     Serial.print("ranging 2...");
-    if (inc_flag_4 && !ms_flag_4) {
+    if (inc_flag_4 && !ms_flag_4) {   // En este caso configuramos el sensor srf04 para que mida en inc
       write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
-    } else if (!inc_flag_4 && ms_flag_4) {
+    } else if (!inc_flag_4 && ms_flag_4) {    // En este caso configuramos el sensor srf04 para que mida en ms
       write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
-    } else {
+    } else {    // Por defecto configuramos el sensor srf04 para que mida en cm
       write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
     }
     delay(SRF04_RANGING_DELAY);
@@ -192,26 +187,26 @@ void loop() {
     byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
     
     Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
-    if (inc_flag_4 && !ms_flag_4) {
+    if (inc_flag_4 && !ms_flag_4) {   // En este caso significa que el sensor srf04 está midiendo en inc
       Serial.print(" inc. (min=");
-    } else if (!inc_flag_4 && ms_flag_4) {
+    } else if (!inc_flag_4 && ms_flag_4) {  // En este caso significa que el sensor srf04 está midiendo en ms
       Serial.print(" ms. (min=");
-    } else {
+    } else {    // Por defecto el sensor srf04 está midiendo en cm
       Serial.print(" cms. (min="); 
     }
     Serial.print(int((high_min_2<<8) | low_min_2));
-    if (inc_flag_4 && !ms_flag_4) {
+    if (inc_flag_4 && !ms_flag_4) {   // En este caso significa que el sensor srf04 está midiendo en inc
       Serial.println(" inc.)");
-    } else if (!inc_flag_4 && ms_flag_4) {
+    } else if (!inc_flag_4 && ms_flag_4) {  // En este caso significa que el sensor srf04 está midiendo en ms
       Serial.println(" ms.)");
-    } else {
+    } else {    // Por defecto el sensor srf04 está midiendo en cm
       Serial.println(" cms.)"); 
     }
     //Serial.print("Enviando 2--> : "); Serial.println(int((high_byte_range_2<<8) | low_byte_range_2));
     //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
-    if (one_shot_4) {
-      one_shot_4 = false;
-      off_4 = true;
+    if (one_shot_4) { // Si el sensor srf04 se le solicita un solo disparo
+      one_shot_4 = false; // Devolvemos la bandera de un disparo a false
+      off_4 = true;   // Volvemos a apagar el sensor 
     }
   }
 
@@ -261,7 +256,7 @@ void loop() {
           }
         }
         char res []= {'o', 'k'};
-        Serial1.write(res, 2);
+        Serial1.write(res, 2); // Enviamos un char array con mensaje de confirmación del cambio
       } else if (data[0]==2) {    // Orden para cambiar unidades
         Serial.print("Ejecutando orden changeUnits");
         if ((int)data[1]==2) {
@@ -296,7 +291,7 @@ void loop() {
           }
         }
         char res []= {'o', 'k'};
-        Serial1.write(res, 2);
+        Serial1.write(res, 2); // Enviamos un char array con mensaje de confirmación del cambio
       } else if(data[0]==3) {     // Orden para cambiar retardo entre disparos
         Serial.print("Ejecutando orden delay");
         if ((int)data[1]==2) {
@@ -316,7 +311,10 @@ void loop() {
         Serial1.write(res, 2);
       } else if(data[0]==4) {     // Orden para obtener configuración del sensor
         Serial.print("Ejecutando orden status");
-        byte res [3];
+        byte res [3]; // Array de byte para almacenar la información de configuración a enviar al supervisor
+        // En la posición 0 almacenamos 2 si es el sensor srf04 y 1 si es el sensor srf02
+        // En la posición 1 almacenamos un 1 si el sensor mide en cm, un 2 si mide en ms y un 3 si mide en inc
+        // En la posición 2 almacenamos el número de ms que tiene el sensor configurado como delay
         if ((int)data[1]==2) {
           Serial.println(" con el sensor srf04");
           res[0] = 2;
@@ -329,7 +327,7 @@ void loop() {
           }
           res[2] = SRF04_RANGING_DELAY;
         } else {
-          Serial.println(" con el sensor srf02");
+          Serial.println(" con el sensor srf02"); 
           res[0] = 1;
           if (inc_flag_2 && !ms_flag_2) {
             res[1] = 3;
@@ -343,7 +341,7 @@ void loop() {
         Serial1.write(res, 3);
       } else if (data[0]==5) {    // Orden para mostrar lista de sensores
         Serial.println("Ejecutando orden us");
-        char res []= {'s', 'r', 'f', '0', '2', ',', ' ', 's', 'r', 'f', '0', '4'};
+        char res []= {'s', 'r', 'f', '0', '2', ',', ' ', 's', 'r', 'f', '0', '4'}; // Enviamos un array de char con los sensores disponibles
         Serial1.write(res, 12);
       } 
       break;
