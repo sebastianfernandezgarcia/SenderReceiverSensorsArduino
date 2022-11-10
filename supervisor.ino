@@ -11,6 +11,8 @@
 
 #define akc 6
 
+#define data_len 50
+
 constexpr const uint32_t serial_monitor_bauds=115200;
 constexpr const uint32_t serial1_bauds=9600;
 
@@ -56,6 +58,8 @@ void loop()
     // y las ordenes que lo necesitan la posición 2 es la opcion elejida de la orden
     // la posición 3 solo se usa en la orden oneshot para los ms del retardo de la opcion 'on'
     
+    char data_c[data_len];
+    byte data_b[data_len];
     if (input == "help") {  // Si se lee help mostramos el menú de ayuda
       help();
     } else if (result1 == REGEXP_MATCHED) { // Orden de un disparo
@@ -87,7 +91,7 @@ void loop()
         v[2] = 1;
         v[3] = 0;
       }
-      oneshot(v);
+      oneshot(v, data_c);
     } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
       byte v[3];
       v[0] = 2;
@@ -110,7 +114,7 @@ void loop()
       } else {
         v[2] = 1;
       }
-      changeUnit(v);
+      changeUnit(v, data_c);
     } else if (result3 == REGEXP_MATCHED) { // Orden para cambiar retardo entre disparos
       byte v[3];
       v[0] = 3;
@@ -127,7 +131,7 @@ void loop()
         v[1] = 1;
       }
       v[2] = (byte)tiempo.toInt();
-      delayed(v);
+      delayed(v, data_c);
     } else if (result4 == REGEXP_MATCHED) { // Orden para obtener configuración del sensor
       byte v[2];
       v[0] = 4;
@@ -140,11 +144,11 @@ void loop()
       } else {
         v[1] = 1;
       }
-      state(v);
+      state(v, data_b);
     } else if (input == "us") { // Orden para mostrar lista de sensores
       byte v[1];
       v[0] = 5;
-      us(v);
+      us(v, data_c);
     } else {  // Si la orden introducida no es valida mostramos un mensaje por el monitor
       SerialUSB.print("La orden ");
       SerialUSB.print(input);
@@ -180,13 +184,11 @@ void help(){
 }
 
 // Orden de hacer oneshot, disparar continuado con 'tiempo' periodico o apagar el sensor
-int oneshot(byte v [4]) {
+int oneshot(byte v [4], char data[data_len]) {
   Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      int data_len = 2;
-      char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
       SerialUSB.print("Estado de la orden: ");
       for (int i = 0; i < rlen; i++) {
@@ -199,13 +201,11 @@ int oneshot(byte v [4]) {
 }
 
 // Orden para cambiar la unidad de medida del sensor
-int changeUnit(byte v [3]) {
+int changeUnit(byte v [3], char data[data_len]) {
   Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
       if(Serial1.available()>0) {  
-      int data_len = 2;
-      char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
       SerialUSB.print("Estado de la orden: ");
       for (int i = 0; i < rlen; i++) {
@@ -218,13 +218,11 @@ int changeUnit(byte v [3]) {
 }
 
 // Orden para modificar el retardo entre dos disparos del sensor
-int delayed(byte v [3]) {
+int delayed(byte v [3], char data[data_len]) {
   Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
     if(Serial1.available()>0) {  
-      int data_len = 2;
-      char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
       SerialUSB.print("Estado de la orden: ");
       for (int i = 0; i < rlen; i++) {
@@ -237,13 +235,11 @@ int delayed(byte v [3]) {
 }
 
 // Orden para obtener la informacion de configuración del sensor
-int state(byte v [2]) {
+int state(byte v [2], byte data[data_len]) {
   Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      int data_len = 3;
-      char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
       SerialUSB.print("El sensor ");
       if ((int)data[0] == 2) {
@@ -274,14 +270,12 @@ int state(byte v [2]) {
 }
 
 // Orden para informar de todos los sensores disponibles
-int us(byte v[1]) {
+int us(byte v[1], char data[data_len]) {
   Serial1.write(v, sizeof(v));
   SerialUSB.print("Los sensores disponibles son: ");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      int data_len = 12;
-      char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
       for (int i = 0; i < rlen; i++) {
         SerialUSB.print(data[i]);
