@@ -18,8 +18,6 @@ constexpr const uint32_t pseudo_period_ms=1000;
 
 uint8_t led_state=LOW;
 
-int option = 0;
-
 void setup()
 {
   // Configuración del LED incluido en placa
@@ -36,8 +34,7 @@ void setup()
 }
 
 void loop()
-{
-  //Serial.println("******************** echo example *********************"); 
+{ 
 
   if(Serial.available()>0) { // Si se encuentra algo que leer 
     String input = Serial.readStringUntil('\n'); //Leemos hasta que se encuentra un sato de línea
@@ -53,8 +50,11 @@ void loop()
     char result3 = ms.Match("^us [a-z0-9]+ delay [0-9]+$"); 
     char result4 = ms.Match("^us [a-z0-9]+ status$"); 
 
-    // En todas las ordenes pasamos a los metodos parametros de tipo char []
-    // Ya que el metodo Serial1.write() no permite mandar tipo String
+    // En todas las ordenes pasamos a los metodos parametros de tipo byte []
+    // Siendo en todos los casos a posición 0 del array el codigo de orden
+    // la posición 1 el sensor con el que se trabajará
+    // y las ordenes que lo necesitan la posición 2 es la opcion elejida de la orden
+    // la posición 3 solo se usa en la orden oneshot para los ms del retardo de la opcion 'on'
     
     if (input == "help") {  // Si se lee help mostramos el menú de ayuda
       help();
@@ -70,74 +70,81 @@ void loop()
       if (nombreOpcion.equals("on")){
         tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
       }
-
       byte v[4];
-      v[0] = (byte)1;
+      v[0] = (byte)1;                       // Primera posición de v es el codigo de orden
+      if (nombreSensor.equals("srf04")) {   // Segunda posición es el identificador del sensor con el que se va a trabajar
+        v[1] = (byte)2;
+      } else {
+        v[1] = (byte)1;
+      }
+      if (nombreOpcion.equals("off")) {    // Tercera posición es el tipo de opción que usa la orden
+        v[2] = (byte)3;
+        v[3] = (byte)0;
+      } else if (nombreOpcion.equals("on")) {
+        v[2] = (byte)2;
+        v[3] = (byte)tiempo.toInt();      // En caso de opción 'on' la cuarta posición es el tiempo en ms entre dos pulsos (al ser tipo byte el número máximo es 255) 
+      } else {
+        v[2] = (byte)1;
+        v[3] = (byte)0;
+      }
+      oneshot(v);
+    } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
+      byte v[3];
+      v[0] = (byte)2;
+      int posicionPrimerEspacio = input.indexOf(" ");
+      String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
+      int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
+      String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
+      String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
+      int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
+      String unidadMedida = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio);
       if (nombreSensor.equals("srf04")) {
         v[1] = (byte)2;
       } else {
         v[1] = (byte)1;
       }
-
-      if (nombreOpcion.equals("off")) {
+      if (unidadMedida.equals("ms")) {
         v[2] = (byte)3;
-        v[3] = (byte)0;
-      } else if (nombreOpcion.equals("on")) {
+      } else if (unidadMedida.equals("inc")) {
         v[2] = (byte)2;
-        v[3] = (byte)tiempo.toInt();
       } else {
         v[2] = (byte)1;
-        v[3] = (byte)0;
       }
-      
-      oneshot(v);
-    } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
-      
-      int posicionPrimerEspacio = input.indexOf(" ");
-      String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
-      int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
-      String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
-
-      String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
-      int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
-      String unidadMedida = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio);
-      
-      String sensor = nombreSensor;
-      char sens [5];
-      String unidad = unidadMedida;
-      char unit [3];
-      sensor.toCharArray(sens, 5);
-      unidad.toCharArray(unit, 3);
-      changeUnit(sens, unit);
+      changeUnit(v);
     } else if (result3 == REGEXP_MATCHED) { // Orden para cambiar retardo entre disparos
-      
+      byte v[3];
+      v[0] = (byte)3;
       int posicionPrimerEspacio = input.indexOf(" ");
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
       String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
-
       String stringDesdeSegundoEspacio = stringDesdePrimerEspacio.substring(posicionSegundoEspacio+1);
       int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
-      String tiempo = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio+1);
-      
-      String sensor = nombreSensor;
-      char sens [5];
-      String miliseconds = tiempo;
-      char tmp [5];
-      sensor.toCharArray(sens, 5);
-      miliseconds.toCharArray(tmp, 5);
-      delayed(sens, tmp);
+      String tiempo = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio);
+      if (nombreSensor.equals("srf04")) {
+        v[1] = (byte)2;
+      } else {
+        v[1] = (byte)1;
+      }
+      v[2] = (byte) tiempo.toInt();
+      delayed(v);
     } else if (result4 == REGEXP_MATCHED) { // Orden para obtener configuración del sensor
+      byte v[2];
+      v[0] = (byte)4;
       int posicionPrimerEspacio = input.indexOf(" ");
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
       String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
-      String sensor = nombreSensor;
-      char sens [5];
-      sensor.toCharArray(sens, 5);
-      state(sens);
+      if (nombreSensor.equals("srf04")) {
+        v[1] = (byte)2;
+      } else {
+        v[1] = (byte)1;
+      }
+      state(v);
     } else if (input == "us") { // Orden para mostrar lista de sensores
-      us();
+      byte v[1];
+      v[0] = (byte)5;
+      us(v);
     } else {  // Si la orden introducida no es valida mostramos un mensaje por el monitor
       SerialUSB.print("La orden ");
       SerialUSB.print(input);
@@ -175,14 +182,6 @@ void help(){
 // Orden de hacer oneshot, disparar continuado con 'tiempo' periodico o apagar el sensor
 int oneshot(byte v [4]) {
   Serial1.write(v, sizeof(v));
-  SerialUSB.print("Se ha pasado: ");
-  SerialUSB.print((int)v[0]);
-  SerialUSB.print(" ");
-  SerialUSB.print((int)v[1]);
-  SerialUSB.print(" ");
-  SerialUSB.print((int)v[2]);
-  SerialUSB.print(" ");
-  SerialUSB.println((int)v[3]);
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
@@ -200,70 +199,78 @@ int oneshot(byte v [4]) {
 }
 
 // Orden para cambiar la unidad de medida del sensor
-int changeUnit(char sensor [5], char unidad [3]) {
-  option = 2;
-  Serial1.write(option);
-  Serial1.write(sensor);
-  Serial1.write(unidad);
+int changeUnit(byte v [3]) {
+  Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
-    uint8_t data = Serial1.read();
-    return data;
+      if(Serial1.available()>0) {  
+      int data_len = 2;
+      char data[data_len];
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.print("Estado de la orden: ");
+      for (int i = 0; i < rlen; i++) {
+        SerialUSB.print(data[i]);
+      }
+      SerialUSB.println();
+      break;
+    }
   }
 }
 
 // Orden para modificar el retardo entre dos disparos del sensor
-int delayed(char sensor [5], char miliseconds [5]) {
-  option = 3;
-  Serial1.write(option);
-  Serial1.write(sensor);
-  Serial1.write(miliseconds);
+int delayed(byte v [3]) {
+  Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
-    uint8_t data = Serial1.read();
-    return data;
+    if(Serial1.available()>0) {  
+      int data_len = 2;
+      char data[data_len];
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.print("Estado de la orden: ");
+      for (int i = 0; i < rlen; i++) {
+        SerialUSB.print(data[i]);
+      }
+      SerialUSB.println();
+      break;
+    }
   }
 }
 
 // Orden para obtener la informacion de configuración del sensor
-int state(char sensor [5]) {
-  option = 4;
-  Serial1.write(option);
-  Serial1.write(sensor);
+int state(byte v [2]) {
+  Serial1.write(v, sizeof(v));
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      uint8_t data = Serial1.read();
-      SerialUSB.print("La la configuracion del sensor ");
-      SerialUSB.print(sensor);
-      SerialUSB.print(" es: ");
-      SerialUSB.println(data);
+      int data_len = 2;
+      char data[data_len];
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.print("Estado de la orden: ");
+      for (int i = 0; i < rlen; i++) {
+        SerialUSB.print(data[i]);
+      }
+      SerialUSB.println();
       break;
     }
-  }
-  last_ms=millis();
-  while(millis()-last_ms<pseudo_period_ms) {
-    uint8_t data = Serial1.read();
-    return data;
   }
 }
 
 // Orden para informar de todos los sensores disponibles
-int us() {
-  option = 5;
-  Serial1.write(option);
+int us(byte v[1]) {
+  Serial1.write(v, sizeof(v));
   SerialUSB.println("Los sensores disponibles son: ");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      uint8_t data = Serial1.read();
-      SerialUSB.println(data);
+      int data_len = 2;
+      char data[data_len];
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.print("Estado de la orden: ");
+      for (int i = 0; i < rlen; i++) {
+        SerialUSB.print(data[i]);
+      }
+      SerialUSB.println();
       break;
     }
-  }
-  last_ms=millis();
-  while(millis()-last_ms<pseudo_period_ms) {
-    uint8_t data = Serial1.read();
-    return data;
   }
 }
