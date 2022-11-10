@@ -11,6 +11,10 @@ volatile boolean inc_flag_2=false;
 volatile boolean ms_flag_2=false;
 volatile boolean inc_flag_4=false;
 volatile boolean ms_flag_4=false;
+volatile boolean off_2=false;
+volatile boolean off_4=false;
+volatile boolean one_shot_2=false;
+volatile boolean one_shot_4=false;
 
 //------------------------IMPORTACIONES SENSOR-------------------
 #include <Wire.h> // Arduino's I2C library
@@ -124,82 +128,93 @@ void setup()
   //----------------FIN DE SET UP DEL SENSOR---------------
 }
 
-void loop()
-{
+void loop() {
+
+  if (off_2 && off_4) {
+    Serial.println("Los dos sensores se encuentran apagados, esperando a que se encienda alguno...");
+  }
+  
   //------
-  Serial.print("ranging 1...");
-  if (inc_flag_2 && !ms_flag_2) {
-    write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
-  } else if (!inc_flag_2 && ms_flag_2) {
-    write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
-  } else {
-    write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
-  }
-  delay(SRF02_RANGING_DELAY);
-  
-  byte high_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_HIGH_BYTE);
-  byte low_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_LOW_BYTE);
-  byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
-  byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
-  
-  Serial.print(int((high_byte_range<<8) | low_byte_range)); 
-  if (inc_flag_2 && !ms_flag_2) {
-    Serial.print(" inc. (min=");
-  } else if (!inc_flag_2 && ms_flag_2) {
-    Serial.print(" ms. (min=");
-  } else {
-    Serial.print(" cms. (min="); 
-  }
-  Serial.print(int((high_min<<8) | low_min));
-  if (inc_flag_2 && !ms_flag_2) {
-    Serial.println(" inc.)");
-  } else if (!inc_flag_2 && ms_flag_2) {
-    Serial.println(" ms.)");
-  } else {
-    Serial.println(" cms.)"); 
-  } 
-  
-  Serial.print("ranging 2...");
-  if (inc_flag_4 && !ms_flag_4) {
-    write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
-  } else if (!inc_flag_4 && ms_flag_4) {
-    write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
-  } else {
-    write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
-  }
-  delay(SRF04_RANGING_DELAY);
-  
-  byte high_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_HIGH_BYTE);
-  byte low_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_LOW_BYTE);
-  byte high_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
-  byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
-  
-  Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
-  if (inc_flag_4 && !ms_flag_4) {
-    Serial.print(" inc. (min=");
-  } else if (!inc_flag_4 && ms_flag_4) {
-    Serial.print(" ms. (min=");
-  } else {
-    Serial.print(" cms. (min="); 
-  }
-  Serial.print(int((high_min_2<<8) | low_min_2));
-  if (inc_flag_4 && !ms_flag_4) {
-    Serial.println(" inc.)");
-  } else if (!inc_flag_4 && ms_flag_4) {
-    Serial.println(" ms.)");
-  } else {
-    Serial.println(" cms.)"); 
+  if (!off_2) {
+    Serial.print("ranging 1...");
+    if (inc_flag_2 && !ms_flag_2) {
+      write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
+    } else if (!inc_flag_2 && ms_flag_2) {
+      write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
+    } else {
+      write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
+    }
+    delay(SRF02_RANGING_DELAY);
+    
+    byte high_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_HIGH_BYTE);
+    byte low_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_LOW_BYTE);
+    byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
+    byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
+    
+    Serial.print(int((high_byte_range<<8) | low_byte_range)); 
+    if (inc_flag_2 && !ms_flag_2) {
+      Serial.print(" inc. (min=");
+    } else if (!inc_flag_2 && ms_flag_2) {
+      Serial.print(" ms. (min=");
+    } else {
+      Serial.print(" cms. (min="); 
+    }
+    Serial.print(int((high_min<<8) | low_min));
+    if (inc_flag_2 && !ms_flag_2) {
+      Serial.println(" inc.)");
+    } else if (!inc_flag_2 && ms_flag_2) {
+      Serial.println(" ms.)");
+    } else {
+      Serial.println(" cms.)"); 
+    }
+    //Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
+    //Serial1.write(int((high_byte_range<<8) | low_byte_range));
+    if (one_shot_2) {
+      one_shot_2 = false;
+      off_2 = true;
+    }
   }
 
-  //-------
-  //Serial.println("******************* sending example *******************"); 
+  if (!off_4) {
+    Serial.print("ranging 2...");
+    if (inc_flag_4 && !ms_flag_4) {
+      write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
+    } else if (!inc_flag_4 && ms_flag_4) {
+      write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
+    } else {
+      write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
+    }
+    delay(SRF04_RANGING_DELAY);
+    
+    byte high_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_HIGH_BYTE);
+    byte low_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_LOW_BYTE);
+    byte high_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
+    byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
+    
+    Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
+    if (inc_flag_4 && !ms_flag_4) {
+      Serial.print(" inc. (min=");
+    } else if (!inc_flag_4 && ms_flag_4) {
+      Serial.print(" ms. (min=");
+    } else {
+      Serial.print(" cms. (min="); 
+    }
+    Serial.print(int((high_min_2<<8) | low_min_2));
+    if (inc_flag_4 && !ms_flag_4) {
+      Serial.println(" inc.)");
+    } else if (!inc_flag_4 && ms_flag_4) {
+      Serial.println(" ms.)");
+    } else {
+      Serial.println(" cms.)"); 
+    }
+    //Serial.print("Enviando 2--> : "); Serial.println(int((high_byte_range_2<<8) | low_byte_range_2));
+    //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
+    if (one_shot_4) {
+      one_shot_4 = false;
+      off_4 = true;
+    }
+  }
 
-  //Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
-  //Serial1.write(int((high_byte_range<<8) | low_byte_range));
-
-  //Serial.print("Enviando 2--> : "); Serial.println(int((high_byte_range_2<<8) | low_byte_range_2));
-  //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
-  
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {
@@ -217,10 +232,14 @@ void loop()
               SRF04_RANGING_DELAY = (int)data[3]; 
             }
             SerialUSB.println(SRF04_RANGING_DELAY);
+            off_4 = false;
           } else if ((int)data[2]==3) {
             Serial.println(" opcion off");
+            off_4 = true;
           } else {
             Serial.println(" opcion oneshot");
+            off_4 = false;
+            one_shot_4 = true;
           }
         } else {
           Serial.print(" con el sensor srf02");
@@ -231,10 +250,14 @@ void loop()
               SRF02_RANGING_DELAY = (int)data[3]; 
             }
             SerialUSB.println(SRF02_RANGING_DELAY);
+            off_2 = false;
           } else if ((int)data[2]==3) {
             Serial.println(" opcion off");
+            off_2 = true;
           } else {
             Serial.println(" opcion oneshot");
+            off_2 = false;
+            one_shot_2 = true;
           }
         }
         char res []= {'o', 'k'};
