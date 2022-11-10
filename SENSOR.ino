@@ -17,11 +17,11 @@ volatile boolean ms_flag_4=false;
  
 #define SRF02_I2C_ADDRESS byte((0xE0)>>1)
 #define SRF02_I2C_INIT_DELAY 100 // in milliseconds
-#define SRF02_RANGING_DELAY 70 // milliseconds
+int SRF02_RANGING_DELAY=70; // milliseconds
 
 #define SRF04_I2C_ADDRESS byte((0xF0)>>1)
 #define SRF04_I2C_INIT_DELAY 200 // in milliseconds
-#define SRF04_RANGING_DELAY 140 // milliseconds
+int SRF04_RANGING_DELAY=140; // milliseconds
 
 // LCD05's command related definitions
 #define COMMAND_REGISTER byte(0x00)
@@ -210,17 +210,32 @@ void loop()
         Serial.print("Ejecutando orden oneshot");
         if ((int)data[1]==2) {
           Serial.print(" con el sensor srf04");
+          if ((int)data[2]==2) {
+            Serial.print(" opcion on");
+            SerialUSB.print(" con un delay de ");
+            if ((int)data[3] > 0) {
+              SRF04_RANGING_DELAY = (int)data[3]; 
+            }
+            SerialUSB.println(SRF04_RANGING_DELAY);
+          } else if ((int)data[2]==3) {
+            Serial.println(" opcion off");
+          } else {
+            Serial.println(" opcion oneshot");
+          }
         } else {
           Serial.print(" con el sensor srf02");
-        }
-        if ((int)data[2]==2) {
-          Serial.print(" opcion on");
-          SerialUSB.print(" con un delay de ");
-          SerialUSB.println((int)data[3]);
-        } else if ((int)data[2]==3) {
-          Serial.println(" opcion off");
-        } else {
-          Serial.println(" opcion oneshot");
+          if ((int)data[2]==2) {
+            Serial.print(" opcion on");
+            SerialUSB.print(" con un delay de ");
+            if ((int)data[3] > 0) {
+              SRF02_RANGING_DELAY = (int)data[3]; 
+            }
+            SerialUSB.println(SRF02_RANGING_DELAY);
+          } else if ((int)data[2]==3) {
+            Serial.println(" opcion off");
+          } else {
+            Serial.println(" opcion oneshot");
+          }
         }
         char res []= {'o', 'k'};
         Serial1.write(res, 2);
@@ -262,12 +277,18 @@ void loop()
       } else if(data[0]==3) {     // Orden para cambiar retardo entre disparos
         Serial.print("Ejecutando orden delay");
         if ((int)data[1]==2) {
-          Serial.print(" con el sensor srf04");
+          Serial.print(" con el sensor srf04 con un valor de ");
+          if ((int)data[3] > 0) {
+            SRF04_RANGING_DELAY = (int)data[3]; 
+          }
+          SerialUSB.println(SRF04_RANGING_DELAY);
         } else {
-          Serial.print(" con el sensor srf02");
+          Serial.print(" con el sensor srf02 con un valor de ");
+          if ((int)data[3] > 0) {
+            SRF02_RANGING_DELAY = (int)data[3]; 
+          }
+          SerialUSB.println(SRF02_RANGING_DELAY);
         }
-        Serial.print(" con un valor de ");
-        SerialUSB.println((int)data[3]);
         char res []= {'o', 'k'};
         Serial1.write(res, 2);
       } else if(data[0]==4) {     // Orden para obtener configuración del sensor
