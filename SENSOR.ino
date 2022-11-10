@@ -293,13 +293,31 @@ void loop()
         Serial1.write(res, 2);
       } else if(data[0]==4) {     // Orden para obtener configuración del sensor
         Serial.print("Ejecutando orden status");
+        byte res [3];
         if ((int)data[1]==2) {
           Serial.println(" con el sensor srf04");
+          res[0] = 2;
+          if (inc_flag_4 && !ms_flag_4) {
+            res[1] = 3;
+          } else if (!inc_flag_4 && ms_flag_4) {
+            res[1] = 2;
+          } else {
+            res[1] = 1;
+          }
+          res[2] = SRF04_RANGING_DELAY;
         } else {
           Serial.println(" con el sensor srf02");
+          res[0] = 1;
+          if (inc_flag_2 && !ms_flag_2) {
+            res[1] = 3;
+          } else if (!inc_flag_2 && ms_flag_2) {
+            res[1] = 2;
+          } else {
+            res[1] = 1;
+          }
+          res[2] = SRF02_RANGING_DELAY;
         }
-        char res []= {'o', 'k'};
-        Serial1.write(res, 2);
+        Serial1.write(res, 3);
       } else if (data[0]==5) {    // Orden para mostrar lista de sensores
         Serial.println("Ejecutando orden us");
         char res []= {'s', 'r', 'f', '0', '2', ',', ' ', 's', 'r', 'f', '0', '4'};

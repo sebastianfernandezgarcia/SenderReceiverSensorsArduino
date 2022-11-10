@@ -71,26 +71,26 @@ void loop()
         tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
       }
       byte v[4];
-      v[0] = (byte)1;                       // Primera posición de v es el codigo de orden
+      v[0] = 1;                       // Primera posición de v es el codigo de orden
       if (nombreSensor.equals("srf04")) {   // Segunda posición es el identificador del sensor con el que se va a trabajar
-        v[1] = (byte)2;
+        v[1] = 2;
       } else {
-        v[1] = (byte)1;
+        v[1] = 1;
       }
       if (nombreOpcion.equals("off")) {    // Tercera posición es el tipo de opción que usa la orden
-        v[2] = (byte)3;
-        v[3] = (byte)0;
+        v[2] = 3;
+        v[3] = 0;
       } else if (nombreOpcion.equals("on")) {
-        v[2] = (byte)2;
+        v[2] = 2;
         v[3] = (byte)tiempo.toInt();      // En caso de opción 'on' la cuarta posición es el tiempo en ms entre dos pulsos (al ser tipo byte el número máximo es 255) 
       } else {
-        v[2] = (byte)1;
-        v[3] = (byte)0;
+        v[2] = 1;
+        v[3] = 0;
       }
       oneshot(v);
     } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
       byte v[3];
-      v[0] = (byte)2;
+      v[0] = 2;
       int posicionPrimerEspacio = input.indexOf(" ");
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
@@ -99,21 +99,21 @@ void loop()
       int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
       String unidadMedida = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio);
       if (nombreSensor.equals("srf04")) {
-        v[1] = (byte)2;
+        v[1] = 2;
       } else {
-        v[1] = (byte)1;
+        v[1] = 1;
       }
       if (unidadMedida.equals("ms")) {
-        v[2] = (byte)3;
+        v[2] = 3;
       } else if (unidadMedida.equals("inc")) {
-        v[2] = (byte)2;
+        v[2] = 2;
       } else {
-        v[2] = (byte)1;
+        v[2] = 1;
       }
       changeUnit(v);
     } else if (result3 == REGEXP_MATCHED) { // Orden para cambiar retardo entre disparos
       byte v[3];
-      v[0] = (byte)3;
+      v[0] = 3;
       int posicionPrimerEspacio = input.indexOf(" ");
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
@@ -122,28 +122,28 @@ void loop()
       int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
       String tiempo = stringDesdeSegundoEspacio.substring(posicionSegundoEspacio);
       if (nombreSensor.equals("srf04")) {
-        v[1] = (byte)2;
+        v[1] = 2;
       } else {
-        v[1] = (byte)1;
+        v[1] = 1;
       }
-      v[2] = (byte) tiempo.toInt();
+      v[2] = (byte)tiempo.toInt();
       delayed(v);
     } else if (result4 == REGEXP_MATCHED) { // Orden para obtener configuración del sensor
       byte v[2];
-      v[0] = (byte)4;
+      v[0] = 4;
       int posicionPrimerEspacio = input.indexOf(" ");
       String stringDesdePrimerEspacio = input.substring(posicionPrimerEspacio+1);
       int posicionSegundoEspacio = stringDesdePrimerEspacio.indexOf(" ");
       String nombreSensor = stringDesdePrimerEspacio.substring(0, posicionSegundoEspacio);
       if (nombreSensor.equals("srf04")) {
-        v[1] = (byte)2;
+        v[1] = 2;
       } else {
-        v[1] = (byte)1;
+        v[1] = 1;
       }
       state(v);
     } else if (input == "us") { // Orden para mostrar lista de sensores
       byte v[1];
-      v[0] = (byte)5;
+      v[0] = 5;
       us(v);
     } else {  // Si la orden introducida no es valida mostramos un mensaje por el monitor
       SerialUSB.print("La orden ");
@@ -242,14 +242,32 @@ int state(byte v [2]) {
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
     if(Serial1.available()>0) {  
-      int data_len = 2;
+      int data_len = 3;
       char data[data_len];
       int rlen = Serial1.readBytes(data, data_len);
-      SerialUSB.print("Estado de la orden: ");
-      for (int i = 0; i < rlen; i++) {
-        SerialUSB.print(data[i]);
+      SerialUSB.print("El sensor ");
+      if ((int)data[0] == 2) {
+        SerialUSB.print("srf04 esta midiendo en ");
+        if ((int)data[1] == 3) {
+          SerialUSB.print("inc ");
+        } else if ((int)data[1] == 2) {
+          SerialUSB.print("ms ");
+        } else {
+          SerialUSB.print("cm ");
+        }
+      } else {
+        SerialUSB.print("srf02 esta midiendo en ");
+        if ((int)data[1] == 3) {
+          SerialUSB.print("inc ");
+        } else if ((int)data[1] == 2) {
+          SerialUSB.print("ms ");
+        } else {
+          SerialUSB.print("cm ");
+        }
       }
-      SerialUSB.println();
+      SerialUSB.print("cada ");
+      SerialUSB.print((int)data[2]);
+      SerialUSB.println("ms");
       break;
     }
   }
