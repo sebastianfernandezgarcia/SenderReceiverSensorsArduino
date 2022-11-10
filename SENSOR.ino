@@ -7,6 +7,11 @@
  * ---------------------------------------------------------------------- 
  */
 
+volatile boolean inc_flag_2=false;
+volatile boolean ms_flag_2=false;
+volatile boolean inc_flag_4=false;
+volatile boolean ms_flag_4=false;
+
 //------------------------IMPORTACIONES SENSOR-------------------
 #include <Wire.h> // Arduino's I2C library
  
@@ -121,10 +126,15 @@ void setup()
 
 void loop()
 {
-
   //------
   Serial.print("ranging 1...");
-  write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
+  if (inc_flag_2 && !ms_flag_2) {
+    write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
+  } else if (!inc_flag_2 && ms_flag_2) {
+    write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
+  } else {
+    write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
+  }
   delay(SRF02_RANGING_DELAY);
   
   byte high_byte_range=read_register(SRF02_I2C_ADDRESS,RANGE_HIGH_BYTE);
@@ -132,12 +142,31 @@ void loop()
   byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  Serial.print(int((high_byte_range<<8) | low_byte_range)); Serial.print(" cms. (min=");
-  Serial.print(int((high_min<<8) | low_min)); Serial.println(" cms.)");
+  Serial.print(int((high_byte_range<<8) | low_byte_range)); 
+  if (inc_flag_2 && !ms_flag_2) {
+    Serial.print(" inc. (min=");
+  } else if (!inc_flag_2 && ms_flag_2) {
+    Serial.print(" ms. (min=");
+  } else {
+    Serial.print(" cms. (min="); 
+  }
+  Serial.print(int((high_min<<8) | low_min));
+  if (inc_flag_2 && !ms_flag_2) {
+    Serial.println(" inc.)");
+  } else if (!inc_flag_2 && ms_flag_2) {
+    Serial.println(" ms.)");
+  } else {
+    Serial.println(" cms.)"); 
+  } 
   
-
   Serial.print("ranging 2...");
-  write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
+  if (inc_flag_4 && !ms_flag_4) {
+    write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
+  } else if (!inc_flag_4 && ms_flag_4) {
+    write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
+  } else {
+    write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
+  }
   delay(SRF04_RANGING_DELAY);
   
   byte high_byte_range_2=read_register(SRF04_I2C_ADDRESS,RANGE_HIGH_BYTE);
@@ -145,8 +174,22 @@ void loop()
   byte high_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
   byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
   
-  Serial.print(int((high_byte_range_2<<8) | low_byte_range_2)); Serial.print(" cms. (min=");
-  Serial.print(int((high_min_2<<8) | low_min_2)); Serial.println(" cms.)");
+  Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
+  if (inc_flag_4 && !ms_flag_4) {
+    Serial.print(" inc. (min=");
+  } else if (!inc_flag_4 && ms_flag_4) {
+    Serial.print(" ms. (min=");
+  } else {
+    Serial.print(" cms. (min="); 
+  }
+  Serial.print(int((high_min_2<<8) | low_min_2));
+  if (inc_flag_4 && !ms_flag_4) {
+    Serial.println(" inc.)");
+  } else if (!inc_flag_4 && ms_flag_4) {
+    Serial.println(" ms.)");
+  } else {
+    Serial.println(" cms.)"); 
+  }
 
   //-------
   //Serial.println("******************* sending example *******************"); 
@@ -182,18 +225,37 @@ void loop()
         char res []= {'o', 'k'};
         Serial1.write(res, 2);
       } else if (data[0]==2) {    // Orden para cambiar unidades
-        Serial.print("Ejecutando orden chaneUnits");
+        Serial.print("Ejecutando orden changeUnits");
         if ((int)data[1]==2) {
           Serial.print(" con el sensor srf04");
+          if ((int)data[2]==2) {
+            Serial.println(" cambiando a inc");
+            inc_flag_4 = true;
+            ms_flag_4 = false;
+          } else if ((int)data[2]==3) {
+            Serial.println(" cambiando a ms");
+            inc_flag_4 = false;
+            ms_flag_4 = true;
+          } else {
+            Serial.println(" cambiando a cm");
+            inc_flag_4 = false;
+            ms_flag_4 = false;
+          }
         } else {
           Serial.print(" con el sensor srf02");
-        }
-        if ((int)data[2]==2) {
-          Serial.println(" cambiando a inc");
-        } else if ((int)data[2]==3) {
-          Serial.println(" cambiando a ms");
-        } else {
-          Serial.println(" cambiando a cm");
+          if ((int)data[2]==2) {
+            Serial.println(" cambiando a inc");
+            inc_flag_2 = true;
+            ms_flag_2 = false;
+          } else if ((int)data[2]==3) {
+            Serial.println(" cambiando a ms");
+            inc_flag_2 = false;
+            ms_flag_2 = true;
+          } else {
+            Serial.println(" cambiando a cm");
+            inc_flag_2 = false;
+            ms_flag_2 = false;
+          }
         }
         char res []= {'o', 'k'};
         Serial1.write(res, 2);
