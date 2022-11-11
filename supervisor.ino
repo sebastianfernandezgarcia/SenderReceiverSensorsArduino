@@ -1,12 +1,17 @@
-/*
- * Interfaz de supervisor de un conjunto de sensores
+/* ----------------------------------------------------------------------
+ *  Ejemplo echo.ino 
+ *    Este ejemplo muestra como utilizar el puerto serie uart (Serial1) 
+ *    para comunicarse con otro dispositivo.
+ *    
+ *  Asignatura (GII-IC)
+ * ---------------------------------------------------------------------- 
  */
  
 #include <Regexp.h>
 
-#define ack 6   // Confirmador de comunicación correcta
+#define akc 6
 
-#define data_len 50 // Logintud del buffer de lectura
+#define data_len 50
 
 constexpr const uint32_t serial_monitor_bauds=115200;
 constexpr const uint32_t serial1_bauds=9600;
@@ -15,7 +20,8 @@ constexpr const uint32_t pseudo_period_ms=1000;
 
 uint8_t led_state=LOW;
 
-void setup(){
+void setup()
+{
   // Configuración del LED incluido en placa
   // Inicialmente apagado
   pinMode(LED_BUILTIN,OUTPUT);
@@ -29,10 +35,13 @@ void setup(){
   Serial1.begin(serial1_bauds);
 }
 
-void loop(){ 
+void loop() { 
 
-  if(Serial.available()>0) { // Si se encuentra algo que leer desde el monitor serie
-    String input = Serial.readStringUntil('\n'); //Leemos hasta que se encuentra un salto de línea
+  char data_c[data_len];
+  byte data_b[data_len];
+
+  if(Serial.available()>0) { // Si se encuentra algo que leer 
+    String input = Serial.readStringUntil('\n'); //Leemos hasta que se encuentra un sato de línea
 
     char Buf[50];
     input.toCharArray(Buf, 50);
@@ -51,8 +60,6 @@ void loop(){
     // y las ordenes que lo necesitan la posición 2 es la opcion elejida de la orden
     // la posición 3 solo se usa en la orden oneshot para los ms del retardo de la opcion 'on'
     
-    char data_c[data_len];  // Bufer de lectura por I2C para un array de char
-    byte data_b[data_len];  // Bufer de lectura por I2C para un array de byte
     if (input == "help") {  // Si se lee help mostramos el menú de ayuda
       help();
     } else if (result1 == REGEXP_MATCHED) { // Orden de un disparo
@@ -64,7 +71,7 @@ void loop(){
       int posicionTercerEspacio = stringDesdeSegundoEspacio.indexOf(" ");
       String nombreOpcion = stringDesdeSegundoEspacio.substring(0, posicionTercerEspacio);
       String tiempo = "";
-      if (nombreOpcion.equals("on")){   // Si se selecciona la opción on guardamos el tiempo de retardo
+      if (nombreOpcion.equals("on")){
         tiempo = stringDesdeSegundoEspacio.substring(posicionTercerEspacio+1);
       }
       byte v[4];
@@ -148,20 +155,7 @@ void loop(){
       SerialUSB.println(" no es una orden valida. Para obtener la lista de ordenes ecriba 'help'");
     }
   }
-
-
-  /*uint32_t last_ms=millis();
-  while(millis()-last_ms<pseudo_period_ms) 
-  { 
-    if(Serial1.available()>0) {  
-      uint8_t data = Serial1.read();
-      SerialUSB.print("La medida obtenida es: ");
-      SerialUSB.print(data);
-      SerialUSB.println("cms");
-      Serial1.write(ack);     // Constante definida con valor 6 para controlar que la comunicación con el sensor es correcta
-      break;
-    }
-  }*/
+  supervision(data_b);   // Supervisamos las medidas de los sensores
   digitalWrite(LED_BUILTIN,led_state);
   led_state=(led_state+1)&0x01;
 }
@@ -174,6 +168,31 @@ void help(){
   SerialUSB.println("- us <srf02> delay <ms>: este comando establece el tiempo de espera o retardo mínimo que debe haber entre dos disparos consecutivos del sensor (<srf02>).");
   SerialUSB.println("- us <srf02> status: este comando debe proporcionar información de configuración del sensor, en concreto, su dirección I2C, retardo mínimo entre disparos, su configuración de unidades de medida, y su estado de disparo periódico, en el caso de que éste esté activado o no.");
   SerialUSB.println("- us: este comando debe proporcionar la relación de sensores de ultrasonidos disponibles en el dispositivo sensor.");
+}
+
+void supervision(byte data[data_len]) {  // Método para la supervisión de medidas del sensor
+  uint32_t last_ms=millis();
+  while(millis()-last_ms<pseudo_period_ms) { 
+    if(Serial1.available()>0) {  
+      int rlen = Serial1.readBytes(data, data_len);
+      SerialUSB.print("La medida obtenida del sensor ");
+      if (data[0]==2) {     // Si la primera posición del array recibido es 2 trabajamos con el sensor srf04
+        SerialUSB.print("srf04 es: ");
+      } else {
+        SerialUSB.print("srf02 es: ");
+      }
+      SerialUSB.print(data[1]);   // La segunda psición del array es el valor de la medida realizada por el sensor
+      if (data[2]==3) {// Si la tercera posición del array recibido es 3 el sensor esta midiendo en incs
+        SerialUSB.println(" incs.");
+      } else if(data[2]==2) {// Si la tercera posición del array recibido es 2 el sensor esta midiendo en ms
+        SerialUSB.println(" ms.");
+      } else {
+        SerialUSB.println(" cms."); 
+      }
+      Serial1.write(akc);     // Constante definida con valor 6 para controlar que la comunicación con el sensor es correcta
+      break;
+    }
+  }
 }
 
 // Orden de hacer oneshot, disparar continuado con 'tiempo' periodico o apagar el sensor
@@ -235,16 +254,16 @@ int state(byte v [2], byte data[data_len]) {
     if(Serial1.available()>0) {  
       int rlen = Serial1.readBytes(data, data_len);
       SerialUSB.print("El sensor ");
-      if ((int)data[0] == 2) {      // Si la primera posición es un 2 trabajamos con el sensor srf04
+      if ((int)data[0] == 2) {
         SerialUSB.print("srf04 esta midiendo en ");
-        if ((int)data[1] == 3) {    // Si la segunda posición es un 3 significa que lee en inc
+        if ((int)data[1] == 3) {
           SerialUSB.print("inc ");
-        } else if ((int)data[1] == 2) { // Si la segunda posición es un 2 significa que lee en ms
+        } else if ((int)data[1] == 2) {
           SerialUSB.print("ms ");
-        } else {    // Por defecto lee en cm
+        } else {
           SerialUSB.print("cm ");
         }
-      } else {    // Por defecto trabajamos con el sensor srf02
+      } else {
         SerialUSB.print("srf02 esta midiendo en ");
         if ((int)data[1] == 3) {
           SerialUSB.print("inc ");
@@ -255,7 +274,7 @@ int state(byte v [2], byte data[data_len]) {
         }
       }
       SerialUSB.print("cada ");
-      SerialUSB.print((int)data[2]);    // La última posicion son los ms que tiene el sensor de retardo entre disparos
+      SerialUSB.print((int)data[2]);
       SerialUSB.println("ms");
       break;
     }
@@ -271,7 +290,7 @@ int us(byte v[1], char data[data_len]) {
     if(Serial1.available()>0) {  
       int rlen = Serial1.readBytes(data, data_len);
       for (int i = 0; i < rlen; i++) {
-        SerialUSB.print(data[i]);     // Imprime la lista de sensores caracter a caracter
+        SerialUSB.print(data[i]);
       }
       SerialUSB.println();
       break;

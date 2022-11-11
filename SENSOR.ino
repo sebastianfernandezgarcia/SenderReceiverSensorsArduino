@@ -15,6 +15,8 @@ volatile boolean one_shot_4=false;
 
 //------------------------IMPORTACIONES SENSOR-------------------
 #include <Wire.h> // Arduino's I2C library
+
+int data_len=3; // Logintud del buffer de escritura
  
 #define SRF02_I2C_ADDRESS byte((0xE0)>>1)
 #define SRF02_I2C_INIT_DELAY 100 // in milliseconds
@@ -50,7 +52,7 @@ int SRF04_RANGING_DELAY=140; // milliseconds
 constexpr const uint32_t serial_monitor_bauds=115200;
 constexpr const uint32_t serial1_bauds=9600;
 
-constexpr const uint32_t pseudo_period_ms=1000;
+constexpr const uint32_t pseudo_period_ms=1005;
 
 uint8_t counter=0;
 uint8_t led_state=LOW;
@@ -124,20 +126,26 @@ void setup(){
 
 void loop() {
 
+  byte data_b[data_len];  // Bufer de escritura por I2C para un array de byte
+  uint8_t akc_data; // Recibidor de ack para confirmación de comunicación correcta
+
   if (off_2 && off_4) { // Si las banderas de estado apagado de ambos sensores estan a true informamos de ello
     Serial.println("Los dos sensores se encuentran apagados, esperando a que se encienda alguno...");
-    
   }
   
   //------
   if (!off_2) {  // Si el sensor srf02 no esta en estado apagado
     Serial.print("ranging 1...");
+    data_b[0]=1;
     if (inc_flag_2 && !ms_flag_2) {   // En este caso configuramos el sensor srf02 para que mida en inc
       write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
+      data_b[2]=3;
     } else if (!inc_flag_2 && ms_flag_2) {    // En este caso configuramos el sensor srf02 para que mida en ms
       write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
+      data_b[2]=2;
     } else {    // Por defecto configuramos el sensor srf02 para que mida en cm
-      write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
+      write_command(SRF02_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
+      data_b[2]=1;
     }
     delay(SRF02_RANGING_DELAY);
     
@@ -146,7 +154,8 @@ void loop() {
     byte high_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_HIGH_BYTE);
     byte low_min=read_register(SRF02_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
     
-    Serial.print(int((high_byte_range<<8) | low_byte_range)); 
+    Serial.print(int((high_byte_range<<8) | low_byte_range));
+    data_b[1]=((high_byte_range<<8) | low_byte_range); 
     if (inc_flag_2 && !ms_flag_2) {   // En este caso significa que el sensor srf02 está midiendo en inc
       Serial.print(" inc. (min=");
     } else if (!inc_flag_2 && ms_flag_2) {  // En este caso significa que el sensor srf02 está midiendo en ms
@@ -162,8 +171,14 @@ void loop() {
     } else {    // Por defecto el sensor srf02 está midiendo en cm
       Serial.println(" cms.)"); 
     }
-    //Serial.print("Enviando 1--> : "); Serial.println(int((high_byte_range<<8) | low_byte_range));
-    //Serial1.write(int((high_byte_range<<8) | low_byte_range));
+    Serial.print("Enviando 1--> : "); 
+    Serial.print(data_b[0]);
+    Serial.print(", ");
+    Serial.print(data_b[1]);
+    Serial.print(", ");
+    Serial.print(data_b[2]);
+    Serial1.write(data_b, data_len);
+    confirmation(akc_data); //  Confirmamos que se envio la medicion al supervisor correctamente
     if (one_shot_2) { // Si el sensor srf02 se le solicita un solo disparo
       one_shot_2 = false; // Devolvemos la bandera de un disparo a false
       off_2 = true; // Volvemos a apagar el sensor 
@@ -172,12 +187,16 @@ void loop() {
 
   if (!off_4) { // Si el sensor srf04 no esta en estado apagado
     Serial.print("ranging 2...");
+    data_b[0]=2;
     if (inc_flag_4 && !ms_flag_4) {   // En este caso configuramos el sensor srf04 para que mida en inc
       write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_INCHES);
+      data_b[2]=3;
     } else if (!inc_flag_4 && ms_flag_4) {    // En este caso configuramos el sensor srf04 para que mida en ms
       write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_USECS);
+      data_b[2]=2;
     } else {    // Por defecto configuramos el sensor srf04 para que mida en cm
-      write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS); 
+      write_command(SRF04_I2C_ADDRESS,REAL_RANGING_MODE_CMS);
+      data_b[2]=1;
     }
     delay(SRF04_RANGING_DELAY);
     
@@ -187,6 +206,7 @@ void loop() {
     byte low_min_2=read_register(SRF04_I2C_ADDRESS,AUTOTUNE_MINIMUM_LOW_BYTE);
     
     Serial.print(int((high_byte_range_2<<8) | low_byte_range_2));
+    data_b[1]=((high_byte_range_2<<8) | low_byte_range_2);
     if (inc_flag_4 && !ms_flag_4) {   // En este caso significa que el sensor srf04 está midiendo en inc
       Serial.print(" inc. (min=");
     } else if (!inc_flag_4 && ms_flag_4) {  // En este caso significa que el sensor srf04 está midiendo en ms
@@ -202,8 +222,14 @@ void loop() {
     } else {    // Por defecto el sensor srf04 está midiendo en cm
       Serial.println(" cms.)"); 
     }
-    //Serial.print("Enviando 2--> : "); Serial.println(int((high_byte_range_2<<8) | low_byte_range_2));
-    //Serial1.write(int((high_byte_range_2<<8) | low_byte_range_2));
+    Serial.print("Enviando 2--> : ");
+    Serial.print(data_b[0]);
+    Serial.print(", ");
+    Serial.print(data_b[1]);
+    Serial.print(", ");
+    Serial.print(data_b[2]);
+    Serial1.write(data_b, data_len);
+    confirmation(akc_data); //  Confirmamos que se envio la medicion al supervisor correctamente
     if (one_shot_4) { // Si el sensor srf04 se le solicita un solo disparo
       one_shot_4 = false; // Devolvemos la bandera de un disparo a false
       off_4 = true;   // Volvemos a apagar el sensor 
@@ -349,4 +375,24 @@ void loop() {
   }
 
   digitalWrite(LED_BUILTIN,led_state); led_state=(led_state+1)&0x01;
+}
+
+void confirmation(uint8_t data) { // Método para la comprobación de conexión con el supervisor
+  uint32_t last_ms=millis();
+  while(millis()-last_ms<pseudo_period_ms) { 
+    if(Serial1.available()>0) {
+      data=Serial1.read();
+      if (static_cast<int>(data) == 6) {    // Si se recibe un valor 6 (valor declarado de akc) la conexión es correcta
+        Serial.println("; <-- akc received!!");
+      } else {
+        Serial.println("; <-- Hubo un problema de comunicación");
+      }
+      break;
+    }
+  }
+  if(millis()-last_ms<pseudo_period_ms) {
+    delay(pseudo_period_ms-(millis()-last_ms));
+  } else {      // Si pasa el tiempo de respuesta maximo avisamos del timeout
+    Serial.println("; <-- akc received: TIMEOUT!!");
+  }
 }
