@@ -52,7 +52,7 @@ int SRF04_RANGING_DELAY=140; // milliseconds
 constexpr const uint32_t serial_monitor_bauds=115200;
 constexpr const uint32_t serial1_bauds=9600;
 
-constexpr const uint32_t pseudo_period_ms=1005;
+constexpr const uint32_t pseudo_period_ms=1100;
 
 uint8_t counter=0;
 uint8_t led_state=LOW;
