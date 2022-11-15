@@ -59,10 +59,10 @@ void loop() {
     char result4 = ms.Match("^us [a-z0-9]+ status$"); 
 
     // En todas las ordenes pasamos a los metodos parametros de tipo byte []
-    // Siendo en todos los casos a posición 0 del array el codigo de orden
+    // Siendo en todos los casos la posición 0 del array el codigo de orden
     // la posición 1 el sensor con el que se trabajará
-    // y las ordenes que lo necesitan la posición 2 es la opcion elejida de la orden
-    // la posición 3 solo se usa en la orden oneshot para los ms del retardo de la opcion 'on'
+    // y las ordenes que lo necesitan la posición 2 es la opcion elejida de la orden.
+    // La posición 3 solo se usa en la orden oneshot para los ms del retardo de la opcion 'on'
     
     if (input == "help") {  // Si se lee help mostramos el menú de ayuda
       help();

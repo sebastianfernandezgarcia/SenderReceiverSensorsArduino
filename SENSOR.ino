@@ -251,7 +251,12 @@ void loop() {
 
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
-    if(Serial1.available()>0) {
+    if(Serial1.available()>0) {   // Si se envia alguna orden desde el supervisor
+      // En todas las ordenes recibimos del supervisor datos de tipo byte []
+      // Siendo en todos los casos la posición 0 del array el codigo de orden
+      // la posición 1 el sensor con el que se trabajará
+      // y las ordenes que lo necesitan la posición 2 es la opcion elejida de la orden.
+      // La posición 3 solo se usa en la orden oneshot para los ms del retardo de la opcion 'on'
       int data_len = 50;
       byte data [data_len];
       SerialUSB.println("==============================");
