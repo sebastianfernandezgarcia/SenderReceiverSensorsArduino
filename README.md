@@ -1,4 +1,4 @@
-# SenderReceiverChibiOS
+# SenderReceiver
 
 Se propone un sistema de Sender-Receiver con 2 arduinos mkr-wan1310 conectados en serial y a uno de ellos se conecta un sensor ultrasonido.
 
