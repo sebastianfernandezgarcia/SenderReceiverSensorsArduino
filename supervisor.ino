@@ -95,7 +95,7 @@ void loop() {
         v[2] = 1;
         v[3] = 0;
       }
-      oneshot(v, data_c);
+      oneshot(v, data_b);
     } else if (result2 == REGEXP_MATCHED) { // Orden para cambiar unidades
       byte v[3];
       v[0] = 2;
@@ -118,7 +118,7 @@ void loop() {
       } else {
         v[2] = 1;
       }
-      changeUnit(v, data_c);
+      changeUnit(v, data_b);
     } else if (result3 == REGEXP_MATCHED) { // Orden para cambiar retardo entre disparos
       byte v[3];
       v[0] = 3;
@@ -135,7 +135,7 @@ void loop() {
         v[1] = 1;
       }
       v[2] = (byte)tiempo.toInt();
-      delayed(v, data_c);
+      delayed(v, data_b);
     } else if (result4 == REGEXP_MATCHED) { // Orden para obtener configuración del sensor
       byte v[2];
       v[0] = 4;
@@ -204,7 +204,7 @@ void supervision(byte data[data_len]) {  // Método para la supervisión de medi
 }
 
 // Orden de hacer oneshot, disparar continuado con 'tiempo' periodico o apagar el sensor
-int oneshot(byte v [4], char data[data_len]) {
+void oneshot(byte v [4], byte data[data_len]) {
   SerialUSB.println("==============================");
   SerialUSB.print("Enviando orden oneshot: ");
   SerialUSB.print(v[0]);
@@ -213,7 +213,7 @@ int oneshot(byte v [4], char data[data_len]) {
   SerialUSB.print(", ");
   SerialUSB.println(v[2]);
   Serial1.write(v, sizeof(v));
-  delay(100);
+  delay(1000);
   SerialUSB.println("==============================");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
@@ -231,7 +231,7 @@ int oneshot(byte v [4], char data[data_len]) {
 }
 
 // Orden para cambiar la unidad de medida del sensor
-int changeUnit(byte v [3], char data[data_len]) {
+void changeUnit(byte v [3], byte data[data_len]) {
   SerialUSB.println("==============================");
   SerialUSB.print("Enviando orden unit: ");
   SerialUSB.print(v[0]);
@@ -240,7 +240,7 @@ int changeUnit(byte v [3], char data[data_len]) {
   SerialUSB.print(", ");
   SerialUSB.println(v[2]);
   Serial1.write(v, sizeof(v));
-  delay(100);
+  delay(1000);
   SerialUSB.println("==============================");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
@@ -258,7 +258,7 @@ int changeUnit(byte v [3], char data[data_len]) {
 }
 
 // Orden para modificar el retardo entre dos disparos del sensor
-int delayed(byte v [3], char data[data_len]) {
+void delayed(byte v [3], byte data[data_len]) {
   SerialUSB.println("==============================");
   SerialUSB.print("Enviando orden delay: ");
   SerialUSB.print(v[0]);
@@ -267,7 +267,7 @@ int delayed(byte v [3], char data[data_len]) {
   SerialUSB.print(", ");
   SerialUSB.println(v[2]);
   Serial1.write(v, sizeof(v));
-  delay(100);
+  delay(1000);
   SerialUSB.println("==============================");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) {
@@ -285,9 +285,9 @@ int delayed(byte v [3], char data[data_len]) {
 }
 
 // Orden para obtener la informacion de configuración del sensor
-int state(byte v [2], byte data[data_len]) {
+void state(byte v [2], byte data[data_len]) {
   Serial1.write(v, sizeof(v));
-  delay(100);
+  delay(1000);
   SerialUSB.println("==============================");
   uint32_t last_ms=millis();
   while(millis()-last_ms<pseudo_period_ms) { 
@@ -323,9 +323,9 @@ int state(byte v [2], byte data[data_len]) {
 }
 
 // Orden para informar de todos los sensores disponibles
-int us(byte v[1], char data[data_len]) {
+void us(byte v[1], char data[data_len]) {
   Serial1.write(v, sizeof(v));
-  delay(100);
+  delay(1000);
   SerialUSB.println("==============================");
   SerialUSB.print("Los sensores disponibles son: ");
   uint32_t last_ms=millis();
